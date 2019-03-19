@@ -130,6 +130,47 @@ class KnowledgeBase(object):
         # Implementation goes here
         # Not required for the extra credit assignment
 
+    def kb_helper(self, fact_or_rule, spaces):
+        result = ""
+        result = spaces + "SUPPORTED BY" + '\n'
+        spaces = spaces + spaces
+        print(fact_or_rule.statement)
+
+        if isinstance(fact_or_rule, Fact):
+            result = result + spaces + "fact: " + str(fact_or_rule.statement)
+            if fact_or_rule.asserted:
+                result = result + " ASSERTED"
+
+            if len(fact_or_rule.supported_by) > 0:
+                for support in fact_or_rule.supported_by:
+                    result = result + '\n' + self.kb_helper(support, spaces)
+
+
+        else:
+            result = result + spaces + "rule: " + '('
+            firsttime = True
+            for r in fact_or_rule.lhs:
+                if firsttime:
+                    firsttime = False
+                else:
+                    result += ", "
+                result += str(r)
+
+            result += ')' + " -> " + fact_or_rule.rhs
+
+            if fact_or_rule.asserted:
+                result = result + " ASSERTED"
+
+            if len(fact_or_rule.supported_by) > 0:
+                for support in fact_or_rule.supported_by:
+                    result = result + '\n' + self.kb_helper(support, spaces)
+
+
+        return result
+
+
+
+
     def kb_explain(self, fact_or_rule):
         """
         Explain where the fact or rule comes from
@@ -142,6 +183,46 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        spaces = "  "
+
+        if isinstance(fact_or_rule, Fact):
+            if fact_or_rule not in self.facts:
+                return "Fact is not in the KB"
+
+            else:
+                fact = self._get_fact(fact_or_rule)
+                statement = str(fact_or_rule.statement)
+                result = "fact: " + statement
+
+                if fact.asserted:
+                    result = result + " ASSERTED"
+
+                if len(fact_or_rule.supported_by) > 0:
+                    for support in fact_or_rule.supported_by:
+                        result = result + '\n' + self.kb_helper(support, spaces)
+
+                return result
+
+        elif isinstance(fact_or_rule, Rule):
+            if fact_or_rule not in self.rules:
+                return "Rule is not in the KB"
+
+            else:
+                rule = self._get_rule(fact_or_rule)
+                result = "rule: " + '(' + fact_or_rule.lhs + ')' + " -> " + fact_or_rule.rhs
+
+                if rule.asserted:
+                    result = result + " ASSERTED"
+
+                if len(fact_or_rule.supported_by) > 0:
+                    for support in fact_or_rule.supported_by:
+                        result = result + '\n' + self.kb_helper(support, spaces)
+
+                return result
+
+        else:
+            return False
+
 
 
 class InferenceEngine(object):
@@ -154,7 +235,7 @@ class InferenceEngine(object):
             kb (KnowledgeBase) - A KnowledgeBase
 
         Returns:
-            Nothing            
+            Nothing
         """
         printv('Attempting to infer from {!r} and {!r} => {!r}', 1, verbose,
             [fact.statement, rule.lhs, rule.rhs])
